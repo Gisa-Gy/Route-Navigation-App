@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Route Navigator</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="map"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 21s7-7.58 7-12a7 7 0 1 0-14 0c0 4.42 7 12 7 12z"/>
+          <circle cx="12" cy="9" r="2.4"/>
+        </svg>
+      </span>
+      <span class="brand-text">Route<strong>Navigator</strong></span>
+    </div>
+
+    <nav class="mode-tabs" role="tablist">
+      <button class="mode-tab active" data-mode="planner" role="tab" aria-selected="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="6" cy="6" r="2.1"/>
+          <circle cx="18" cy="18" r="2.1"/>
+          <path d="M7.6 7.2l2.8 1.8M13.6 11l2.8 1.8" stroke-dasharray="0.5 3.2"/>
+        </svg>
+        <span>Planner</span>
+      </button>
+      <button class="mode-tab" data-mode="alternatives" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 7h9l-2.2-2.2M13 7l-2.2 2.2"/>
+          <path d="M20 17h-9l2.2 2.2M11 17l2.2-2.2"/>
+        </svg>
+        <span>Alternatives</span>
+      </button>
+      <button class="mode-tab" data-mode="elevation" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 18l5.5-8.5 3.5 4.5 2-2.8L21 18z"/>
+        </svg>
+        <span>Elevation</span>
+      </button>
+    </nav>
+  </header>
+
+  <div class="panel-dock">
+    <aside id="planner-panel" class="side-panel">
+      <div class="panel-header">
+        <h2>Waypoints</h2>
+        <span class="hint">Click the map to add a stop (2–5)</span>
+      </div>
+      <ol id="waypoint-list" class="waypoint-list" data-empty-hint="Click anywhere on the map to drop your first stop"></ol>
+      <div class="panel-actions">
+        <button id="optimize-btn" class="btn btn-primary" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.8 5.8l2.1 2.1M16.1 16.1l2.1 2.1M5.8 18.2l2.1-2.1M16.1 7.9l2.1-2.1"/></svg>
+          Optimize Order
+        </button>
+        <button id="clear-planner-btn" class="btn btn-ghost">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>
+          Clear
+        </button>
+        <button id="share-planner-btn" class="btn btn-ghost" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.1"/><circle cx="18" cy="6" r="2.1"/><circle cx="18" cy="18" r="2.1"/><path d="M7.9 10.9l8.2-3.8M7.9 13.1l8.2 3.8"/></svg>
+          Share
+        </button>
+      </div>
+      <div id="planner-summary" class="route-summary"></div>
+      <div id="planner-share-box" class="share-box hidden"></div>
+      <div id="planner-status" class="status-message"></div>
+    </aside>
+
+    <aside id="alternatives-panel" class="side-panel hidden">
+      <div class="panel-header">
+        <h2>Route Alternatives</h2>
+        <span class="hint">Click map to set Start, then End</span>
+      </div>
+      <div class="endpoint-labels">
+        <div><span class="dot start-dot"></span> Start <b id="start-label">not set</b></div>
+        <div><span class="dot end-dot"></span> End <b id="end-label">not set</b></div>
+      </div>
+      <ul id="route-cards" class="route-cards" data-empty-hint="Alternative routes will appear here"></ul>
+      <div class="panel-actions">
+        <button id="clear-alternatives-btn" class="btn btn-ghost">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>
+          Clear
+        </button>
+        <button id="share-alternatives-btn" class="btn btn-ghost" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.1"/><circle cx="18" cy="6" r="2.1"/><circle cx="18" cy="18" r="2.1"/><path d="M7.9 10.9l8.2-3.8M7.9 13.1l8.2 3.8"/></svg>
+          Share
+        </button>
+      </div>
+      <div id="alternatives-share-box" class="share-box hidden"></div>
+      <div id="alternatives-status" class="status-message"></div>
+    </aside>
+
+    <aside id="elevation-panel" class="side-panel hidden">
+      <div class="panel-header">
+        <h2>Elevation Profile</h2>
+        <span class="hint">Click map to set Start, then End</span>
+      </div>
+      <div class="profile-select">
+        <label>
+          <input type="radio" name="elevation-profile" value="foot" checked />
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4.5" r="1.6"/><path d="M10 22l1.2-6.2-2-1.8.9-4.6 2.6 2 2.7-1.2 2.1 3.4-2.3 1 1.3 7.4M9 15l-3 1.4"/></svg>Walking</span>
+        </label>
+        <label>
+          <input type="radio" name="elevation-profile" value="bike" />
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.2"/><circle cx="18.5" cy="17.5" r="3.2"/><path d="M5.5 17.5L10 8h4l3 4.5M10 8l2.5 4.5h6M8 12h4"/></svg>Cycling</span>
+        </label>
+      </div>
+      <div class="endpoint-labels">
+        <div><span class="dot start-dot"></span> Start <b id="elev-start-label">not set</b></div>
+        <div><span class="dot end-dot"></span> End <b id="elev-end-label">not set</b></div>
+      </div>
+      <div id="elevation-summary" class="route-summary"></div>
+      <div class="chart-container">
+        <canvas id="elevation-chart" height="160"></canvas>
+      </div>
+      <div class="panel-actions">
+        <button id="clear-elevation-btn" class="btn btn-ghost">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>
+          Clear
+        </button>
+        <button id="share-elevation-btn" class="btn btn-ghost" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.1"/><circle cx="18" cy="6" r="2.1"/><circle cx="18" cy="18" r="2.1"/><path d="M7.9 10.9l8.2-3.8M7.9 13.1l8.2 3.8"/></svg>
+          Share
+        </button>
+      </div>
+      <div id="elevation-share-box" class="share-box hidden"></div>
+      <div id="elevation-status" class="status-message"></div>
+    </aside>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/waypoints.js"></script>
+  <script src="js/route-planner.js"></script>
+  <script src="js/alternatives.js"></script>
+  <script src="js/elevation.js"></script>
+  <script src="js/share.js"></script>
+</body>
+</html>
