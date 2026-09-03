@@ -4,14 +4,7 @@
   "description": "RouteNavigator — a lightweight web GIS route planning and analysis app (Leaflet client + Express routing/elevation proxy).",
   "main": "server.js",
   "type": "commonjs",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "dependencies": {
-    "express": "^4.19.2"
-  }
+  "scripts": { "start": "node server.js", "dev": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "express": "^4.19.2" }
 }

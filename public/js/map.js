@@ -11,11 +11,16 @@ const ESRI_LIGHT_GRAY = 'https://services.arcgisonline.com/ArcGIS/rest/services/
 const ESRI_LIGHT_GRAY_LABELS = 'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}';
 const ESRI_ATTRIBUTION = '&copy; <a href="https://www.esri.com">Esri</a> &mdash; Esri, DeLorme, NAVTEQ';
 
-L.tileLayer(ESRI_LIGHT_GRAY, { maxZoom: 19, attribution: ESRI_ATTRIBUTION }).addTo(map);
-// Labels layer stacks on top of the base tiles (both in the default tile
-// pane, added-order determines stacking) but still sits below route
-// polylines/markers, which live in Leaflet's higher-z overlay/marker panes.
-L.tileLayer(ESRI_LIGHT_GRAY_LABELS, { maxZoom: 19 }).addTo(map);
+// Grouped so the basemap switcher (map-components.js) can toggle base+labels
+// as one "Light" option. Exposed on window for that file to read.
+const esriLightGrayLayer = L.layerGroup([
+  L.tileLayer(ESRI_LIGHT_GRAY, { maxZoom: 19, attribution: ESRI_ATTRIBUTION }),
+  // Labels layer stacks on top of the base tiles (added-order determines
+  // stacking) but still sits below route polylines/markers, which live in
+  // Leaflet's higher-z overlay/marker panes.
+  L.tileLayer(ESRI_LIGHT_GRAY_LABELS, { maxZoom: 19 }),
+]).addTo(map);
+window.__esriLightGray = esriLightGrayLayer;
 
 // Default top-left zoom control would collide with the floating brand/tabs bar.
 L.control.zoom({ position: 'bottomleft' }).addTo(map);

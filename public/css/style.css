@@ -682,3 +682,93 @@ html, body {
     max-height: 46vh;
   }
 }
+
+/* ---------- Map components (Step 1) ---------- */
+
+.map-ctl {
+  border: none !important;
+  box-shadow: var(--shadow-float) !important;
+  border-radius: var(--radius-sm) !important;
+  overflow: hidden;
+  margin-bottom: 8px !important;
+}
+
+.map-ctl-btn {
+  width: 34px;
+  height: 34px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-solid);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.map-ctl-btn:hover {
+  background: rgba(15, 23, 42, 0.05);
+  color: var(--color-primary);
+}
+
+.map-ctl-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.map-ctl-btn.loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.map-ctl-btn.loading svg {
+  animation: ctlSpin 0.8s linear infinite;
+}
+
+@keyframes ctlSpin {
+  to { transform: rotate(360deg); }
+}
+
+.coord-readout {
+  background: var(--color-surface);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 8px !important;
+  white-space: nowrap;
+}
+
+/* Leaflet layers control — align to the app's visual language */
+.leaflet-control-layers {
+  border: none !important;
+  box-shadow: var(--shadow-float) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+.leaflet-control-layers-toggle {
+  border-radius: var(--radius-sm) !important;
+}
+
+.leaflet-control-layers-expanded {
+  padding: 0.6rem 0.75rem !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.82rem !important;
+  color: var(--color-text) !important;
+}
+
+.leaflet-control-scale-line {
+  border: 1px solid var(--color-border) !important;
+  border-top: none !important;
+  background: var(--color-surface) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-family: var(--font-sans) !important;
+  font-size: 0.68rem !important;
+  color: var(--color-text-muted) !important;
+  padding: 1px 6px !important;
+}
