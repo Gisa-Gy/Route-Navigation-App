@@ -301,6 +301,98 @@ app.get('/api/geocode', async (req, res) => {
 // ---------------------------------------------------------------------------
 // Static client + health check
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// GET /api/poi?category=...&bbox=s,w,n,e  — OSM points of interest (Overpass)
+// ---------------------------------------------------------------------------
+// Categories are a fixed server-side whitelist rather than free-form tags, so a
+// caller can't craft an arbitrary (and potentially very expensive) Overpass
+// query through this endpoint.
+const OVERPASS_URL = process.env.OVERPASS_URL || 'https://overpass-api.de/api/interpreter';
+
+const POI_CATEGORIES = {
+  food: [['amenity', 'restaurant'], ['amenity', 'cafe'], ['amenity', 'fast_food']],
+  lodging: [['tourism', 'hotel'], ['tourism', 'guest_house'], ['tourism', 'hostel']],
+  fuel: [['amenity', 'fuel'], ['amenity', 'charging_station']],
+  health: [['amenity', 'hospital'], ['amenity', 'clinic'], ['amenity', 'pharmacy']],
+  education: [['amenity', 'school'], ['amenity', 'university'], ['amenity', 'college']],
+  money: [['amenity', 'bank'], ['amenity', 'atm']],
+  shops: [['shop', 'supermarket'], ['shop', 'convenience'], ['shop', 'mall']],
+  transport: [['amenity', 'bus_station'], ['public_transport', 'station'], ['aeroway', 'aerodrome']],
+};
+
+app.get('/api/poi', async (req, res) => {
+  const category = (req.query.category || '').toString();
+  const tags = POI_CATEGORIES[category];
+  if (!tags) {
+    return res.status(400).json({ error: 'Unknown category.' });
+  }
+
+  const parts = (req.query.bbox || '').toString().split(',').map(Number);
+  if (parts.length !== 4 || !parts.every(Number.isFinite)) {
+    return res.status(400).json({ error: 'A bbox of s,w,n,e is required.' });
+  }
+  const [s, w, n, e] = parts;
+  if (s >= n || w >= e || s < -90 || n > 90 || w < -180 || e > 180) {
+    return res.status(400).json({ error: 'bbox values are out of range.' });
+  }
+  // Overpass bills by area; refuse absurd extents rather than hammering it.
+  if ((n - s) * (e - w) > 4) {
+    return res.status(400).json({ error: 'Zoom in further to search for places here.' });
+  }
+
+  const bbox = `${s},${w},${n},${e}`;
+  // nwr = nodes, ways and relations, so POIs mapped as buildings are included.
+  const clauses = tags.map(([k, v]) => `nwr["${k}"="${v}"](${bbox});`).join('');
+  const query = `[out:json][timeout:20];(${clauses});out center 60;`;
+
+  try {
+    const upstream = await fetchWithTimeout(
+      OVERPASS_URL,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': GEOCODER_UA,
+        },
+        body: 'data=' + encodeURIComponent(query),
+      },
+      25000
+    );
+
+    if (upstream.status === 429 || upstream.status === 504) {
+      return res.status(429).json({ error: 'The places service is busy. Try again shortly.' });
+    }
+
+    const data = await upstream.json().catch(() => null);
+    if (!data || !Array.isArray(data.elements)) {
+      return res.status(502).json({ error: 'The places service is unavailable right now.' });
+    }
+
+    const results = data.elements
+      .map((el) => {
+        // Ways/relations carry their centroid in `center`; nodes have lat/lon.
+        const lat = el.lat != null ? el.lat : el.center && el.center.lat;
+        const lng = el.lon != null ? el.lon : el.center && el.center.lon;
+        const t = el.tags || {};
+        if (lat == null || lng == null || !t.name) return null;
+        return {
+          name: t.name,
+          lat,
+          lng,
+          kind: t.amenity || t.tourism || t.shop || t.public_transport || t.aeroway || null,
+        };
+      })
+      .filter(Boolean);
+
+    res.json({ results });
+  } catch (err) {
+    const aborted = err && err.name === 'AbortError';
+    res.status(504).json({
+      error: aborted ? 'The places search timed out.' : 'Could not reach the places service.',
+    });
+  }
+});
+
 app.get('/healthz', (_req, res) => res.json({ ok: true }));
 
 app.use(express.static(path.join(__dirname, 'public')));

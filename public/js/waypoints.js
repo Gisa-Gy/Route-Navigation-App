@@ -33,12 +33,33 @@ function renderWaypointList() {
     const li = document.createElement('li');
     li.className = 'waypoint-row';
     li.dataset.index = i;
+    const fallback = `Stop ${i + 1}`;
+    const shown = Naming.labelFor(wp, fallback);
     li.innerHTML = `
       <span class="badge">${i + 1}</span>
-      <span class="label">Stop ${i + 1} (${wp.lat.toFixed(4)}, ${wp.lng.toFixed(4)})</span>
+      <span class="label-wrap">
+        <span class="label" title="Click to rename"></span>
+        <span class="coords"></span>
+      </span>
       <button class="remove-btn" title="Remove">${REMOVE_ICON_SVG}</button>
       <span class="drag-handle">${DRAG_HANDLE_SVG}</span>
     `;
+    const labelEl = li.querySelector('.label');
+    labelEl.textContent = shown;
+    li.querySelector('.coords').textContent =
+      `${wp.lat.toFixed(4)}, ${wp.lng.toFixed(4)}`;
+
+    // Click the name to rename it in place.
+    labelEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Naming.editInline(labelEl, wp.name || '', (value) => {
+        wp.name = value;
+        renderWaypointList();
+        Naming.tagMarker(wp.marker, Naming.labelFor(wp, fallback));
+      });
+    });
+
+    Naming.tagMarker(wp.marker, shown);
     li.querySelector('.remove-btn').addEventListener('click', () => removeWaypoint(i));
     waypointListEl.appendChild(li);
   });

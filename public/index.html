@@ -39,11 +39,11 @@
 
     <div class="rail-group">
       <span class="rail-label">Explore</span>
-      <button class="rail-btn mode-tab" data-mode="search" title="Search places">
+      <button class="rail-btn mode-tab" data-mode="search" data-tip="Find a place by name or address, then send it to the planner">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>
         <span>Search</span>
       </button>
-      <button class="rail-btn mode-tab" data-mode="bookmarks" title="Saved places">
+      <button class="rail-btn mode-tab" data-mode="bookmarks" data-tip="Places you have saved in this browser">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v17l-6-4.2L6 21z"/></svg>
         <span>Saved</span>
       </button>
@@ -51,15 +51,15 @@
 
     <div class="rail-group">
       <span class="rail-label">Routing</span>
-      <button class="rail-btn mode-tab active" data-mode="planner" title="Plan a multi-stop route">
+      <button class="rail-btn mode-tab active" data-mode="planner" data-tip="Drop 2-5 stops and get a route; optimize the visiting order">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2.1"/><circle cx="18" cy="18" r="2.1"/><path d="M7.6 7.2l2.8 1.8M13.6 11l2.8 1.8" stroke-dasharray="0.5 3.2"/></svg>
         <span>Planner</span>
       </button>
-      <button class="rail-btn mode-tab" data-mode="alternatives" title="Compare alternative routes">
+      <button class="rail-btn mode-tab" data-mode="alternatives" data-tip="Compare parallel routes between two points on distance and time">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9l-2.2-2.2M13 7l-2.2 2.2"/><path d="M20 17h-9l2.2 2.2M11 17l2.2-2.2"/></svg>
         <span>Routes</span>
       </button>
-      <button class="rail-btn mode-tab" data-mode="elevation" title="Elevation profile">
+      <button class="rail-btn mode-tab" data-mode="elevation" data-tip="Elevation profile along a walking or cycling route">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18l5.5-8.5 3.5 4.5 2-2.8L21 18z"/></svg>
         <span>Elevation</span>
       </button>
@@ -67,7 +67,7 @@
 
     <div class="rail-group">
       <span class="rail-label">Analysis</span>
-      <button class="rail-btn mode-tab" data-mode="sightline" title="Line-of-sight between two points">
+      <button class="rail-btn mode-tab" data-mode="sightline" data-tip="Test whether a target is visible from an observer across the terrain">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg>
         <span>Sightline</span>
       </button>
@@ -75,13 +75,9 @@
 
     <div class="rail-group rail-group-end">
       <span class="rail-label">Output</span>
-      <button class="rail-btn" id="export-btn" type="button" title="Download what's on the map as GeoJSON">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4M4 20h16"/></svg>
-        <span>Export</span>
-      </button>
-      <button class="rail-btn" id="print-btn" type="button" title="Print the current map">
+      <button class="rail-btn mode-tab" data-mode="output" data-tip="Build a printable map layout, or download your work as GeoJSON, KML, KMZ or shapefile">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4v-6h16v6h-2M8 14h8v7H8z"/></svg>
-        <span>Print</span>
+        <span>Layout</span>
       </button>
     </div>
   </nav>
@@ -95,6 +91,23 @@
         <span class="hint">Find a place, then send it to the planner or save it</span>
       </div>
       <div id="search-detail"></div>
+
+      <div class="poi-block">
+        <span class="block-label">Nearby places in this view</span>
+        <div id="poi-chips" class="chips">
+          <button class="chip" data-category="food" type="button">Food</button>
+          <button class="chip" data-category="lodging" type="button">Hotels</button>
+          <button class="chip" data-category="fuel" type="button">Fuel</button>
+          <button class="chip" data-category="health" type="button">Health</button>
+          <button class="chip" data-category="education" type="button">Schools</button>
+          <button class="chip" data-category="money" type="button">Banks</button>
+          <button class="chip" data-category="shops" type="button">Shops</button>
+          <button class="chip" data-category="transport" type="button">Transport</button>
+        </div>
+        <div id="poi-count" class="poi-count"></div>
+        <div id="poi-status" class="status-message"></div>
+      </div>
+
       <div id="search-status" class="status-message"></div>
     </aside>
 
@@ -238,11 +251,53 @@
       <div id="los-status" class="status-message"></div>
     </aside>
 
+    <!-- Output: print layout + export -->
+    <aside class="side-panel hidden" data-panel="output">
+      <div class="panel-header">
+        <h2>Layout &amp; export</h2>
+        <span class="hint">Build a printable sheet, or download your work for other GIS software</span>
+      </div>
+
+      <label class="stack-field">
+        <span>Map title</span>
+        <input id="print-title" type="text" placeholder="RouteNavigator map" maxlength="80" />
+      </label>
+      <label class="stack-field">
+        <span>Subtitle</span>
+        <input id="print-subtitle" type="text" placeholder="Optional — area, client, purpose" maxlength="90" />
+      </label>
+
+      <span class="block-label">Include analysis results</span>
+      <div id="print-options" class="check-list">
+        <label><input type="checkbox" name="planner" checked /><span>Route stops</span></label>
+        <label><input type="checkbox" name="alternatives" checked /><span>Route comparison</span></label>
+        <label><input type="checkbox" name="elevation" checked /><span>Elevation profile</span></label>
+        <label><input type="checkbox" name="sightline" checked /><span>Line-of-sight result</span></label>
+      </div>
+
+      <div class="panel-actions">
+        <button id="do-print-btn" class="btn btn-primary" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4v-6h16v6h-2M8 14h8v7H8z"/></svg>
+          Print layout
+        </button>
+      </div>
+
+      <span class="block-label">Download</span>
+      <div id="export-formats" class="chips">
+        <button class="chip" data-format="geojson" type="button">GeoJSON</button>
+        <button class="chip" data-format="kml" type="button">KML</button>
+        <button class="chip" data-format="kmz" type="button">KMZ</button>
+        <button class="chip" data-format="shp" type="button">Shapefile</button>
+      </div>
+      <div id="export-status" class="status-message"></div>
+    </aside>
+
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="js/naming.js"></script>
   <script src="js/map.js"></script>
   <script src="js/map-components.js"></script>
   <script src="js/waypoints.js"></script>
@@ -251,8 +306,10 @@
   <script src="js/elevation.js"></script>
   <script src="js/bookmarks.js"></script>
   <script src="js/search.js"></script>
+  <script src="js/poi.js"></script>
   <script src="js/sightline.js"></script>
   <script src="js/export.js"></script>
+  <script src="js/print.js"></script>
   <script src="js/share.js"></script>
 </body>
 </html>

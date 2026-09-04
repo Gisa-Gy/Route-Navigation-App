@@ -304,6 +304,7 @@ html, body {
 }
 
 .side-panel {
+  animation: panelSlide 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   background: var(--paper-veil);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -328,6 +329,221 @@ html, body {
   font-size: 0.75rem;
   color: var(--ink-faint);
   line-height: 1.4;
+}
+
+@keyframes panelSlide {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ---------- Rail hover tips ---------- */
+
+.rail-btn[data-tip] { position: relative; }
+
+.rail-btn[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 9px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  width: 216px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-panel);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 1200;
+}
+
+.rail-btn[data-tip]:hover::after,
+.rail-btn[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* ---------- Chips (POI categories, export formats) ---------- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 9px;
+}
+
+.chip {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+}
+
+.chip:hover { background: var(--line-soft); }
+
+.chip.active {
+  background: var(--signal);
+  border-color: var(--signal);
+  color: #fff;
+}
+
+.chip:focus-visible { outline: 2px solid var(--signal); outline-offset: 1px; }
+
+.block-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+  margin: 4px 0 6px;
+}
+
+.poi-block {
+  margin-top: 13px;
+  padding-top: 13px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.poi-count {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+
+.poi-popup strong { display: block; font-size: 0.85rem; }
+.poi-popup .poi-kind {
+  display: block;
+  font-size: 0.73rem;
+  color: var(--ink-muted);
+  margin-top: 1px;
+}
+.poi-popup .poi-add {
+  margin-top: 7px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: var(--r-sm);
+  padding: 4px 9px;
+  font-family: var(--sans);
+  font-size: 0.73rem;
+  cursor: pointer;
+}
+.poi-popup .poi-add:hover { background: var(--signal-soft); }
+
+/* ---------- Renaming ---------- */
+
+.renameable, .waypoint-row .label {
+  cursor: text;
+  border-bottom: 1px dashed transparent;
+}
+
+.renameable:hover, .waypoint-row .label:hover {
+  border-bottom-color: var(--ink-faint);
+}
+
+.rename-input {
+  width: 100%;
+  min-width: 90px;
+  border: 1px solid var(--signal);
+  border-radius: var(--r-sm);
+  padding: 2px 6px;
+  font-family: var(--sans);
+  font-size: 0.79rem;
+  color: var(--ink);
+  outline: none;
+  background: var(--paper);
+}
+
+.label-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.waypoint-row .label {
+  font-family: var(--sans);
+  font-size: 0.81rem;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.waypoint-row .coords {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+}
+
+.ep-name { font-weight: 600; }
+.ep-coords {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+
+/* ---------- Form fields ---------- */
+
+.stack-field {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.stack-field > span {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--ink-muted);
+  margin-bottom: 4px;
+}
+
+.stack-field input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 7px 9px;
+  font-family: var(--sans);
+  font-size: 0.81rem;
+  color: var(--ink);
+  background: var(--paper);
+  outline: none;
+}
+
+.stack-field input:focus { border-color: var(--signal); }
+
+.check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.check-list label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.79rem;
+  cursor: pointer;
+}
+
+.check-list input { accent-color: var(--signal); }
+
+.status-message.is-error {
+  padding: 8px 10px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-radius: var(--r-sm);
 }
 
 /* ---------- Empty states ---------- */
@@ -944,7 +1160,11 @@ html, body {
   .leaflet-bottom.leaflet-right { margin-bottom: 62px; }
 }
 
-/* ---------- Print: map only ---------- */
+/* ---------- Print layout ---------- */
+
+/* The sheet only exists while printing; print.js appends it and removes it
+   again on afterprint. */
+#print-sheet { display: none; }
 
 @media print {
   .rail,
@@ -953,14 +1173,167 @@ html, body {
   .leaflet-control-zoom,
   .map-ctl,
   .coord-readout,
-  .leaflet-control-layers { display: none !important; }
+  .leaflet-control-layers,
+  .leaflet-control-scale { display: none !important; }
 
-  #map { position: absolute !important; inset: 0 !important; }
+  html, body { background: #fff; height: auto; }
 
-  .leaflet-control-attribution,
-  .leaflet-control-scale-line { background: #fff !important; }
+  #print-sheet {
+    display: block;
+    position: relative;
+    font-family: var(--sans);
+    color: #000;
+  }
 
-  @page { margin: 10mm; }
+  .sheet-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    border-bottom: 1.5px solid #000;
+    padding-bottom: 7px;
+    margin-bottom: 9px;
+  }
+
+  .sheet-head h1 {
+    margin: 0;
+    font-size: 16pt;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .sheet-sub {
+    margin: 2px 0 0;
+    font-size: 9.5pt;
+    color: #333;
+  }
+
+  .sheet-meta {
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 7.5pt;
+    color: #333;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+
+  /* The live Leaflet map is lifted out of the page flow and pinned over the
+     slot the sheet reserves for it, so it prints as the map frame. */
+  .sheet-map-slot {
+    height: 118mm;
+    margin-bottom: 9px;
+    border: 1px solid #000;
+    overflow: hidden;
+  }
+
+  /* print.js moves the live map inside .sheet-map-slot, so it just needs to
+     fill its new parent rather than stay fixed to the viewport. */
+  body.printing #map {
+    position: static !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .sheet-furniture {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 10px;
+  }
+
+  .sheet-north {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 8pt;
+    font-weight: 600;
+  }
+
+  .sheet-north svg { width: 15px; height: 15px; }
+
+  .sheet-scale {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 8pt;
+  }
+
+  .scale-bar {
+    display: inline-block;
+    width: 26mm;
+    height: 3px;
+    background: linear-gradient(to right, #000 0 50%, #fff 50% 100%);
+    border: 1px solid #000;
+  }
+
+  .sheet-legend { margin-bottom: 10px; }
+
+  .sheet-legend h2,
+  .sheet-analysis h2 {
+    margin: 0 0 5px;
+    font-size: 10pt;
+    font-weight: 600;
+    border-bottom: 0.5px solid #999;
+    padding-bottom: 2px;
+  }
+
+  .sheet-legend ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px 20px;
+    font-size: 8.5pt;
+  }
+
+  .sheet-legend li { display: flex; align-items: center; gap: 6px; }
+
+  .legend-mark { display: inline-block; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+  .legend-line { width: 17px; height: 3px; }
+
+  .sheet-analysis { margin-bottom: 10px; }
+  .sheet-analysis h2 { margin-top: 9px; }
+
+  .sheet-analysis table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+    margin-bottom: 3px;
+  }
+
+  .sheet-analysis th {
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 0.75px solid #000;
+    padding: 3px 6px 3px 0;
+  }
+
+  .sheet-analysis td {
+    padding: 2.5px 6px 2.5px 0;
+    border-bottom: 0.25px solid #ccc;
+    vertical-align: top;
+  }
+
+  .sheet-note {
+    margin: 3px 0 0;
+    font-size: 7.5pt;
+    font-style: italic;
+    color: #444;
+  }
+
+  .sheet-foot {
+    border-top: 0.5px solid #999;
+    padding-top: 5px;
+    font-size: 7pt;
+    color: #444;
+  }
+
+  .leaflet-control-attribution { display: none !important; }
+
+  @page { margin: 12mm; size: A4 portrait; }
 }
 
 /* ---------- Reduced motion ---------- */

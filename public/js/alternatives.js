@@ -32,12 +32,12 @@ function alternativesOnMapClick(latlng) {
     Alternatives.start = latlng;
     if (Alternatives.startMarker) map.removeLayer(Alternatives.startMarker);
     Alternatives.startMarker = L.marker(latlng, { icon: createPinIcon('S', 'var(--color-start)', 24) }).addTo(map);
-    startLabelEl.textContent = `${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`;
+    Naming.renderEndpoint(startLabelEl, Alternatives.start, 'Start', Alternatives.startMarker);
   } else if (!Alternatives.end) {
     Alternatives.end = latlng;
     if (Alternatives.endMarker) map.removeLayer(Alternatives.endMarker);
     Alternatives.endMarker = L.marker(latlng, { icon: createPinIcon('E', 'var(--color-end)', 24) }).addTo(map);
-    endLabelEl.textContent = `${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`;
+    Naming.renderEndpoint(endLabelEl, Alternatives.end, 'End', Alternatives.endMarker);
     fetchAlternatives();
   } else {
     // Both already set and map clicked again: reset selection to default view.

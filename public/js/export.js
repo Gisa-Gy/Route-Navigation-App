@@ -1,12 +1,14 @@
-// Output: export the current map contents as GeoJSON, and print the map.
+// Output: export what's on the map to GIS interchange formats.
 //
-// GeoJSON is the interchange format a GIS audience expects — the download opens
-// directly in QGIS, ArcGIS Pro, or geojson.io. Everything is written in WGS84
-// (EPSG:4326) lng,lat order, which is what the GeoJSON spec requires.
+// GeoJSON  — RFC 7946, opens anywhere (QGIS, ArcGIS, geojson.io).
+// KML/KMZ  — Google Earth. KMZ is just a zipped KML.
+// Shapefile— still the lingua franca in a lot of GIS shops.
+//
+// All coordinates are WGS 84 (EPSG:4326) in lng,lat order, which is what
+// GeoJSON requires and what KML expects.
 
 (function () {
-  const exportBtn = document.getElementById('export-btn');
-  const printBtn = document.getElementById('print-btn');
+  const statusEl = document.getElementById('export-status');
 
   function feature(geometry, properties) {
     return { type: 'Feature', geometry, properties: properties || {} };
@@ -16,7 +18,7 @@
     return feature({ type: 'Point', coordinates: [lng, lat] }, properties);
   }
 
-  // Leaflet polylines hold [lat,lng]; GeoJSON needs [lng,lat].
+  // Leaflet holds [lat,lng]; GeoJSON needs [lng,lat].
   function lineFromLatLngs(latlngs, properties) {
     return feature(
       { type: 'LineString', coordinates: latlngs.map((p) => [p.lng, p.lat]) },
@@ -24,24 +26,30 @@
     );
   }
 
-  // Collect from whichever tools currently have something on the map. Each
-  // block is guarded because a tool's globals only exist once its script ran
-  // and the user has actually used it.
+  // Gather from whichever tools currently have something on the map. Each
+  // block is guarded because a tool's state only exists once it's been used.
   function collectFeatures() {
     const features = [];
 
     if (typeof Planner !== 'undefined' && Planner.waypoints && Planner.waypoints.length) {
       Planner.waypoints.forEach((wp, i) => {
         features.push(
-          pointFeature(wp.lat, wp.lng, { tool: 'planner', role: 'waypoint', stop: i + 1 })
+          pointFeature(wp.lat, wp.lng, {
+            name: Naming.labelFor(wp, 'Stop ' + (i + 1)),
+            tool: 'planner',
+            role: 'waypoint',
+            stop: i + 1,
+          })
         );
       });
     }
-    // plannerPolyline is a top-level binding in route-planner.js, which is
-    // reachable from here in classic (non-module) scripts.
     if (typeof plannerPolyline !== 'undefined' && plannerPolyline) {
       features.push(
-        lineFromLatLngs(plannerPolyline.getLatLngs(), { tool: 'planner', role: 'route' })
+        lineFromLatLngs(plannerPolyline.getLatLngs(), {
+          name: 'Planned route',
+          tool: 'planner',
+          role: 'route',
+        })
       );
     }
 
@@ -49,14 +57,18 @@
       if (Alternatives.start) {
         features.push(
           pointFeature(Alternatives.start.lat, Alternatives.start.lng, {
-            tool: 'alternatives', role: 'start',
+            name: Naming.labelFor(Alternatives.start, 'Start'),
+            tool: 'alternatives',
+            role: 'start',
           })
         );
       }
       if (Alternatives.end) {
         features.push(
           pointFeature(Alternatives.end.lat, Alternatives.end.lng, {
-            tool: 'alternatives', role: 'end',
+            name: Naming.labelFor(Alternatives.end, 'End'),
+            tool: 'alternatives',
+            role: 'end',
           })
         );
       }
@@ -64,11 +76,12 @@
         if (!r.polyline) return;
         features.push(
           lineFromLatLngs(r.polyline.getLatLngs(), {
+            name: 'Route option ' + (r.id + 1),
             tool: 'alternatives',
             role: 'route',
             option: r.id + 1,
-            distance_m: Math.round(r.distanceMeters),
-            duration_s: Math.round(r.durationSeconds),
+            dist_m: Math.round(r.distanceMeters),
+            dur_s: Math.round(r.durationSeconds),
           })
         );
       });
@@ -77,18 +90,20 @@
     if (typeof Elevation !== 'undefined' && Elevation.routePolyline) {
       features.push(
         lineFromLatLngs(Elevation.routePolyline.getLatLngs(), {
-          tool: 'elevation', role: 'route',
+          name: 'Elevation route',
+          tool: 'elevation',
+          role: 'route',
         })
       );
       (Elevation.sampledPoints || []).forEach((p, i) => {
         if (typeof p.elevationMeters !== 'number') return;
         features.push(
           pointFeature(p.lat, p.lng, {
+            name: 'Sample ' + (i + 1),
             tool: 'elevation',
             role: 'sample',
-            index: i,
-            distance_km: Number(p.distanceKm.toFixed(4)),
-            elevation_m: p.elevationMeters,
+            dist_km: Number(p.distanceKm.toFixed(4)),
+            elev_m: p.elevationMeters,
           })
         );
       });
@@ -97,12 +112,16 @@
     if (window.Sightline && Sightline.observer && Sightline.target) {
       features.push(
         pointFeature(Sightline.observer.lat, Sightline.observer.lng, {
-          tool: 'sightline', role: 'observer',
+          name: Naming.labelFor(Sightline.observer, 'Observer'),
+          tool: 'sightline',
+          role: 'observer',
         })
       );
       features.push(
         pointFeature(Sightline.target.lat, Sightline.target.lng, {
-          tool: 'sightline', role: 'target',
+          name: Naming.labelFor(Sightline.target, 'Target'),
+          tool: 'sightline',
+          role: 'target',
         })
       );
       features.push(
@@ -114,16 +133,98 @@
               [Sightline.target.lng, Sightline.target.lat],
             ],
           },
-          { tool: 'sightline', role: 'sight-line', visible: Sightline.lastVerdict || null }
+          {
+            name: 'Sight line',
+            tool: 'sightline',
+            role: 'sight-line',
+            visible: Sightline.lastVerdict === null ? 'unknown' : String(Sightline.lastVerdict),
+          }
         )
       );
+    }
+
+    if (window.POI && POI.results && POI.results.length) {
+      POI.results.forEach((r) => {
+        features.push(
+          pointFeature(r.lat, r.lng, { name: r.name, tool: 'poi', kind: r.kind || '' })
+        );
+      });
     }
 
     return features;
   }
 
-  function download(filename, text) {
-    const blob = new Blob([text], { type: 'application/geo+json' });
+  function collection() {
+    return {
+      type: 'FeatureCollection',
+      // RFC 7946 dropped the "crs" member (all GeoJSON is WGS 84), so the note
+      // lives in metadata instead of pretending to be a spec field.
+      metadata: {
+        source: 'RouteNavigator',
+        exported: new Date().toISOString(),
+        crs: 'EPSG:4326',
+      },
+      features: collectFeatures(),
+    };
+  }
+
+  // ---- KML ----------------------------------------------------------------
+  function xmlEscape(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function kmlFor(fc, docName) {
+    const placemarks = fc.features
+      .map((f) => {
+        const props = f.properties || {};
+        const name = xmlEscape(props.name || 'Feature');
+        const desc = Object.keys(props)
+          .filter((k) => k !== 'name')
+          .map((k) => k + ': ' + props[k])
+          .join('\n');
+
+        let geom = '';
+        if (f.geometry.type === 'Point') {
+          geom =
+            '<Point><coordinates>' +
+            f.geometry.coordinates[0] + ',' + f.geometry.coordinates[1] + ',0' +
+            '</coordinates></Point>';
+        } else if (f.geometry.type === 'LineString') {
+          const coords = f.geometry.coordinates
+            .map((c) => c[0] + ',' + c[1] + ',0')
+            .join(' ');
+          geom =
+            '<LineString><tessellate>1</tessellate><coordinates>' +
+            coords +
+            '</coordinates></LineString>';
+        }
+
+        return (
+          '  <Placemark>\n' +
+          '    <name>' + name + '</name>\n' +
+          (desc ? '    <description>' + xmlEscape(desc) + '</description>\n' : '') +
+          '    ' + geom + '\n' +
+          '  </Placemark>'
+        );
+      })
+      .join('\n');
+
+    return (
+      '<?xml version="1.0" encoding="UTF-8"?>\n' +
+      '<kml xmlns="http://www.opengis.net/kml/2.2">\n' +
+      '<Document>\n' +
+      '  <name>' + xmlEscape(docName) + '</name>\n' +
+      placemarks + '\n' +
+      '</Document>\n</kml>\n'
+    );
+  }
+
+  // ---- Download helpers ---------------------------------------------------
+  function saveBlob(filename, blob) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -131,48 +232,114 @@
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    // Revoke on the next tick so the click has definitely been handled.
     setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
-  function flash(button, message) {
-    const label = button.querySelector('span');
-    if (!label) return;
-    const original = label.textContent;
-    label.textContent = message;
-    button.classList.add('flash');
-    setTimeout(() => {
-      label.textContent = original;
-      button.classList.remove('flash');
-    }, 1600);
+  function stamp() {
+    return new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
   }
 
-  exportBtn.addEventListener('click', () => {
-    const features = collectFeatures();
-    if (features.length === 0) {
-      flash(exportBtn, 'Nothing yet');
+  function say(message, isError) {
+    statusEl.textContent = message;
+    statusEl.classList.toggle('is-error', !!isError);
+    if (!isError) setTimeout(() => { statusEl.textContent = ''; }, 2600);
+  }
+
+  // Loads a script once, on demand — KMZ and Shapefile each need a library,
+  // and there's no reason to make every visitor download them up front.
+  const loaded = {};
+  function loadScript(url) {
+    if (loaded[url]) return loaded[url];
+    loaded[url] = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = url;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Could not load ' + url));
+      document.head.appendChild(s);
+    });
+    return loaded[url];
+  }
+
+  const JSZIP_URL = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+  const SHPWRITE_URL = 'https://cdn.jsdelivr.net/npm/@mapbox/shp-write@0.4.3/shpwrite.js';
+
+  // ---- Format handlers ----------------------------------------------------
+  async function exportAs(format) {
+    const fc = collection();
+    if (fc.features.length === 0) {
+      say('Nothing on the map to export yet.', true);
       return;
     }
-    const fc = {
-      type: 'FeatureCollection',
-      // Name the CRS in metadata rather than the deprecated GeoJSON "crs"
-      // member, which RFC 7946 removed (all GeoJSON is WGS84 by definition).
-      metadata: {
-        source: 'RouteNavigator',
-        exported: new Date().toISOString(),
-        crs: 'EPSG:4326',
-      },
-      features,
-    };
-    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-    download('routenavigator-' + stamp + '.geojson', JSON.stringify(fc, null, 2));
-    flash(exportBtn, 'Downloaded');
-  });
+    const base = 'routenavigator-' + stamp();
 
-  printBtn.addEventListener('click', () => {
-    // Leaflet needs a resize nudge after the print stylesheet changes the map
-    // box, otherwise tiles can print with gaps.
-    map.invalidateSize();
-    setTimeout(() => window.print(), 150);
+    try {
+      if (format === 'geojson') {
+        saveBlob(
+          base + '.geojson',
+          new Blob([JSON.stringify(fc, null, 2)], { type: 'application/geo+json' })
+        );
+        say('GeoJSON downloaded.');
+        return;
+      }
+
+      if (format === 'kml') {
+        saveBlob(
+          base + '.kml',
+          new Blob([kmlFor(fc, base)], {
+            type: 'application/vnd.google-earth.kml+xml',
+          })
+        );
+        say('KML downloaded.');
+        return;
+      }
+
+      if (format === 'kmz') {
+        say('Preparing KMZ…');
+        await loadScript(JSZIP_URL);
+        const zip = new JSZip();
+        // KMZ convention: the main document is doc.kml at the archive root.
+        zip.file('doc.kml', kmlFor(fc, base));
+        const blob = await zip.generateAsync({
+          type: 'blob',
+          mimeType: 'application/vnd.google-earth.kmz',
+        });
+        saveBlob(base + '.kmz', blob);
+        say('KMZ downloaded.');
+        return;
+      }
+
+      if (format === 'shp') {
+        say('Preparing shapefile…');
+        await loadScript(SHPWRITE_URL);
+        // A shapefile holds ONE geometry type, so shp-write emits a separate
+        // layer per type inside the zip. Attribute names are truncated to 10
+        // characters by the DBF format — that's the spec, not a bug here.
+        const options = {
+          folder: base,
+          types: { point: 'points', polyline: 'lines', polygon: 'polygons' },
+        };
+        const result = shpwrite.zip(fc, options);
+        // 0.4.x returns a base64 string; newer builds return a Blob/Promise.
+        const blob =
+          result instanceof Blob
+            ? result
+            : result && typeof result.then === 'function'
+            ? await result
+            : new Blob([Uint8Array.from(atob(result), (c) => c.charCodeAt(0))], {
+                type: 'application/zip',
+              });
+        saveBlob(base + '-shapefile.zip', blob);
+        say('Shapefile (zipped) downloaded.');
+        return;
+      }
+    } catch (err) {
+      say((err && err.message) || 'Export failed.', true);
+    }
+  }
+
+  document.getElementById('export-formats').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-format]');
+    if (!btn) return;
+    exportAs(btn.dataset.format);
   });
 })();

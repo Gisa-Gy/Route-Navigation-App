@@ -59,12 +59,12 @@ function elevationOnMapClick(latlng) {
     Elevation.start = latlng;
     if (Elevation.startMarker) map.removeLayer(Elevation.startMarker);
     Elevation.startMarker = L.marker(latlng, { icon: createPinIcon('S', 'var(--color-start)', 24) }).addTo(map);
-    elevStartLabelEl.textContent = `${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`;
+    Naming.renderEndpoint(elevStartLabelEl, Elevation.start, 'Start', Elevation.startMarker);
   } else if (!Elevation.end) {
     Elevation.end = latlng;
     if (Elevation.endMarker) map.removeLayer(Elevation.endMarker);
     Elevation.endMarker = L.marker(latlng, { icon: createPinIcon('E', 'var(--color-end)', 24) }).addTo(map);
-    elevEndLabelEl.textContent = `${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`;
+    Naming.renderEndpoint(elevEndLabelEl, Elevation.end, 'End', Elevation.endMarker);
     fetchElevationProfile();
   }
   // Both already set: ignore further clicks until Clear (matches planner/alternatives pattern).

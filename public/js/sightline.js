@@ -69,16 +69,14 @@
       LOS.observerMarker = L.marker(latlng, {
         icon: createPinIcon('O', 'var(--color-observer)', 24),
       }).addTo(map);
-      observerLabelEl.textContent =
-        latlng.lat.toFixed(4) + ', ' + latlng.lng.toFixed(4);
+      Naming.renderEndpoint(observerLabelEl, LOS.observer, 'Observer', LOS.observerMarker);
     } else if (!LOS.target) {
       LOS.target = latlng;
       if (LOS.targetMarker) map.removeLayer(LOS.targetMarker);
       LOS.targetMarker = L.marker(latlng, {
         icon: createPinIcon('T', 'var(--color-target)', 24),
       }).addTo(map);
-      targetLabelEl.textContent =
-        latlng.lat.toFixed(4) + ', ' + latlng.lng.toFixed(4);
+      Naming.renderEndpoint(targetLabelEl, LOS.target, 'Target', LOS.targetMarker);
       runAnalysis();
     }
     // Both set: further clicks ignored until Clear, matching the other tools.
