@@ -55,6 +55,9 @@
     if (window.POI && POI.results.length) {
       items.push({ swatch: '#0369a1', shape: 'dot', label: 'Points of interest' });
     }
+    if (opt('bookmarks') && window.Bookmarks && Bookmarks.all().length) {
+      items.push({ swatch: '#b45309', shape: 'dot', label: 'Saved places' });
+    }
     return items;
   }
 
@@ -146,6 +149,17 @@
           (verdictEl ? verdictEl.textContent.trim().replace(/\s+/g, ' ') + ' ' : '') +
           'Ground surface only; buildings and vegetation are not modelled.',
       });
+    }
+
+    if (opt('bookmarks') && window.Bookmarks) {
+      const marks = Bookmarks.all();
+      if (marks.length) {
+        blocks.push({
+          heading: 'Saved places',
+          columns: ['Name', 'Coordinates'],
+          rows: marks.map((b) => [b.name, b.lat.toFixed(5) + ', ' + b.lng.toFixed(5)]),
+        });
+      }
     }
 
     return blocks;
@@ -281,6 +295,91 @@
   // Where the map lives normally, so it can be put back after printing.
   let mapHome = null;
 
+  // Labels added just for the printout. On screen, names appear on hover; on
+  // paper there is no hover, so every named feature gets a permanent label
+  // that is removed again once printing finishes.
+  let printLabels = [];
+
+  function label(layer, text) {
+    if (!layer || !text) return;
+    const tip = L.tooltip({
+      permanent: true,
+      direction: 'top',
+      className: 'print-label',
+      opacity: 1,
+    }).setContent(text);
+    layer.bindTooltip(tip);
+    layer.openTooltip();
+    printLabels.push(layer);
+  }
+
+  function addPrintLabels() {
+    printLabels = [];
+
+    if (typeof Planner !== 'undefined') {
+      Planner.waypoints.forEach((wp, i) => {
+        label(wp.marker, Naming.labelFor(wp, 'Stop ' + (i + 1)));
+      });
+    }
+    if (typeof plannerPolyline !== 'undefined' && plannerPolyline) {
+      label(plannerPolyline, 'Planned route');
+    }
+
+    if (typeof Alternatives !== 'undefined') {
+      if (Alternatives.startMarker) {
+        label(Alternatives.startMarker, Naming.labelFor(Alternatives.start, 'Start'));
+      }
+      if (Alternatives.endMarker) {
+        label(Alternatives.endMarker, Naming.labelFor(Alternatives.end, 'End'));
+      }
+      Alternatives.routes.forEach((r) => {
+        if (r.polyline) label(r.polyline, 'Option ' + (r.id + 1));
+      });
+    }
+
+    if (typeof Elevation !== 'undefined') {
+      if (Elevation.startMarker) {
+        label(Elevation.startMarker, Naming.labelFor(Elevation.start, 'Start'));
+      }
+      if (Elevation.endMarker) {
+        label(Elevation.endMarker, Naming.labelFor(Elevation.end, 'End'));
+      }
+      if (Elevation.routePolyline) label(Elevation.routePolyline, 'Elevation route');
+    }
+
+    if (window.Sightline) {
+      if (Sightline.observerMarker) {
+        label(Sightline.observerMarker, Naming.labelFor(Sightline.observer, 'Observer'));
+      }
+      if (Sightline.targetMarker) {
+        label(Sightline.targetMarker, Naming.labelFor(Sightline.target, 'Target'));
+      }
+      if (Sightline.line) {
+        label(
+          Sightline.line,
+          Sightline.lastVerdict === null
+            ? 'Sight line'
+            : Sightline.lastVerdict
+            ? 'Sight line — visible'
+            : 'Sight line — blocked'
+        );
+      }
+    }
+  }
+
+  function removePrintLabels() {
+    printLabels.forEach((layer) => {
+      if (layer.getTooltip()) layer.unbindTooltip();
+    });
+    printLabels = [];
+    // Points get their normal hover tooltip back.
+    if (typeof Planner !== 'undefined') {
+      Planner.waypoints.forEach((wp, i) => {
+        Naming.tagMarker(wp.marker, Naming.labelFor(wp, 'Stop ' + (i + 1)));
+      });
+    }
+  }
+
   function run() {
     const existing = document.getElementById('print-sheet');
     if (existing) existing.remove();
@@ -295,6 +394,7 @@
     const mapEl = document.getElementById('map');
     if (!mapHome) mapHome = { parent: mapEl.parentNode, next: mapEl.nextSibling };
     sheet.querySelector('.sheet-map-slot').appendChild(mapEl);
+    addPrintLabels();
 
     // Let the print layout apply, then tell Leaflet its container resized so
     // tiles fill the new map box instead of printing with gaps.
@@ -305,6 +405,7 @@
   }
 
   function teardown() {
+    removePrintLabels();
     document.body.classList.remove('printing');
     // Put the map back exactly where it was before removing the sheet.
     const mapEl = document.getElementById('map');

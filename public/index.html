@@ -14,82 +14,85 @@
 <body>
   <div id="map"></div>
 
-  <!-- Floating place search, sitting over the map like a navigation app -->
-  <div class="searchbar">
-    <div class="searchbar-field">
-      <svg class="searchbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/>
-      </svg>
-      <input id="search-input" type="text" autocomplete="off" spellcheck="false"
-             placeholder="Search places, addresses or landmarks" aria-label="Search places" />
-      <button id="search-clear" class="searchbar-clear hidden" type="button" aria-label="Clear search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-    </div>
-    <div id="search-results" class="search-results hidden"></div>
-  </div>
+  <aside class="sidebar" id="sidebar">
+    <header class="sidebar-head">
+      <div class="brand">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 21s7-7.58 7-12a7 7 0 1 0-14 0c0 4.42 7 12 7 12z"/><circle cx="12" cy="9" r="2.4"/>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <strong>RouteNavigator</strong>
+          <em>Web GIS route planning</em>
+        </span>
+      </div>
 
-  <!-- Tool rail: groups follow the workflow — find a place, build a route, analyse it -->
-  <nav class="rail" aria-label="Tools">
-    <div class="rail-brand" title="RouteNavigator">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 21s7-7.58 7-12a7 7 0 1 0-14 0c0 4.42 7 12 7 12z"/><circle cx="12" cy="9" r="2.4"/>
-      </svg>
-    </div>
+      <div class="searchbar">
+        <div class="searchbar-field">
+          <svg class="searchbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/>
+          </svg>
+          <input id="search-input" type="text" autocomplete="off" spellcheck="false"
+                 placeholder="Search places or addresses" aria-label="Search places" />
+          <button id="search-clear" class="searchbar-clear hidden" type="button" aria-label="Clear search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div id="search-results" class="search-results hidden"></div>
+      </div>
+    </header>
 
-    <div class="rail-group">
-      <span class="rail-label">Explore</span>
-      <button class="rail-btn mode-tab" data-mode="search" data-tip="Find a place by name or address, then send it to the planner">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>
-        <span>Search</span>
-      </button>
-      <button class="rail-btn mode-tab" data-mode="bookmarks" data-tip="Places you have saved in this browser">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v17l-6-4.2L6 21z"/></svg>
-        <span>Saved</span>
-      </button>
-    </div>
+    <nav class="sidebar-nav" aria-label="Tools">
+        <div class="nav-group">
+          <span class="nav-group-label">Explore</span>
+          <button class="nav-item mode-tab" data-mode="search" data-tip="Find a place by name or address, then send it to the planner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>
+            <span>Search</span>
+          </button>
+          <button class="nav-item mode-tab" data-mode="bookmarks" data-tip="Places you have saved in this browser">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v17l-6-4.2L6 21z"/></svg>
+            <span>Saved places</span>
+          </button>
+        </div>
+        <div class="nav-group">
+          <span class="nav-group-label">Routing</span>
+          <button class="nav-item mode-tab active" data-mode="planner" data-tip="Drop 2-5 stops and get a route; optimize the visiting order">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.1"/><circle cx="18" cy="18" r="2.1"/><path d="M7.6 7.2l2.8 1.8M13.6 11l2.8 1.8" stroke-dasharray="0.5 3.2"/></svg>
+            <span>Route planner</span>
+          </button>
+          <button class="nav-item mode-tab" data-mode="alternatives" data-tip="Compare parallel routes between two points on distance and time">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9l-2.2-2.2M13 7l-2.2 2.2"/><path d="M20 17h-9l2.2 2.2M11 17l2.2-2.2"/></svg>
+            <span>Alternative routes</span>
+          </button>
+          <button class="nav-item mode-tab" data-mode="elevation" data-tip="Elevation profile along a walking or cycling route">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18l5.5-8.5 3.5 4.5 2-2.8L21 18z"/></svg>
+            <span>Elevation profile</span>
+          </button>
+        </div>
+        <div class="nav-group">
+          <span class="nav-group-label">Analysis</span>
+          <button class="nav-item mode-tab" data-mode="sightline" data-tip="Test whether a target is visible from an observer across the terrain">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg>
+            <span>Line of sight</span>
+          </button>
+        </div>
+        <div class="nav-group">
+          <span class="nav-group-label">Output</span>
+          <button class="nav-item mode-tab" data-mode="output" data-tip="Build a printable map sheet, or download as GeoJSON, KML, KMZ or shapefile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4v-6h16v6h-2M8 14h8v7H8z"/></svg>
+            <span>Layout & export</span>
+          </button>
+        </div>
+    </nav>
 
-    <div class="rail-group">
-      <span class="rail-label">Routing</span>
-      <button class="rail-btn mode-tab active" data-mode="planner" data-tip="Drop 2-5 stops and get a route; optimize the visiting order">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2.1"/><circle cx="18" cy="18" r="2.1"/><path d="M7.6 7.2l2.8 1.8M13.6 11l2.8 1.8" stroke-dasharray="0.5 3.2"/></svg>
-        <span>Planner</span>
-      </button>
-      <button class="rail-btn mode-tab" data-mode="alternatives" data-tip="Compare parallel routes between two points on distance and time">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9l-2.2-2.2M13 7l-2.2 2.2"/><path d="M20 17h-9l2.2 2.2M11 17l2.2-2.2"/></svg>
-        <span>Routes</span>
-      </button>
-      <button class="rail-btn mode-tab" data-mode="elevation" data-tip="Elevation profile along a walking or cycling route">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18l5.5-8.5 3.5 4.5 2-2.8L21 18z"/></svg>
-        <span>Elevation</span>
-      </button>
-    </div>
-
-    <div class="rail-group">
-      <span class="rail-label">Analysis</span>
-      <button class="rail-btn mode-tab" data-mode="sightline" data-tip="Test whether a target is visible from an observer across the terrain">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg>
-        <span>Sightline</span>
-      </button>
-    </div>
-
-    <div class="rail-group rail-group-end">
-      <span class="rail-label">Output</span>
-      <button class="rail-btn mode-tab" data-mode="output" data-tip="Build a printable map layout, or download your work as GeoJSON, KML, KMZ or shapefile">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4v-6h16v6h-2M8 14h8v7H8z"/></svg>
-        <span>Layout</span>
-      </button>
-    </div>
-  </nav>
-
-  <div class="panel-dock">
+    <div class="sidebar-body panel-dock">
 
     <!-- Explore: search -->
     <aside class="side-panel hidden" data-panel="search">
       <div class="panel-header">
         <h2>Search</h2>
         <span class="hint">Find a place, then send it to the planner or save it</span>
-      </div>
       <div id="search-detail"></div>
 
       <div class="poi-block">
@@ -103,10 +106,8 @@
           <button class="chip" data-category="money" type="button">Banks</button>
           <button class="chip" data-category="shops" type="button">Shops</button>
           <button class="chip" data-category="transport" type="button">Transport</button>
-        </div>
         <div id="poi-count" class="poi-count"></div>
         <div id="poi-status" class="status-message"></div>
-      </div>
 
       <div id="search-status" class="status-message"></div>
     </aside>
@@ -116,14 +117,12 @@
       <div class="panel-header">
         <h2>Saved places</h2>
         <span class="hint">Stored in this browser only</span>
-      </div>
       <ul id="bookmark-list" class="bookmark-list" data-empty-hint="Save the current view, or search for a place and save it"></ul>
       <div class="panel-actions">
         <button id="bookmark-add-btn" class="btn btn-primary" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           Save this view
         </button>
-      </div>
       <div id="bookmark-status" class="status-message"></div>
     </aside>
 
@@ -132,7 +131,6 @@
       <div class="panel-header">
         <h2>Route planner</h2>
         <span class="hint">Click the map to add a stop (2–5)</span>
-      </div>
       <ol id="waypoint-list" class="waypoint-list" data-empty-hint="Click anywhere on the map to drop your first stop"></ol>
       <div class="panel-actions">
         <button id="optimize-btn" class="btn btn-primary" disabled>
@@ -147,7 +145,6 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.1"/><circle cx="18" cy="6" r="2.1"/><circle cx="18" cy="18" r="2.1"/><path d="M7.9 10.9l8.2-3.8M7.9 13.1l8.2 3.8"/></svg>
           Share
         </button>
-      </div>
       <div id="planner-summary" class="route-summary"></div>
       <div id="planner-share-box" class="share-box hidden"></div>
       <div id="planner-status" class="status-message"></div>
@@ -158,11 +155,9 @@
       <div class="panel-header">
         <h2>Alternative routes</h2>
         <span class="hint">Click the map to set start, then end</span>
-      </div>
       <div class="endpoint-labels">
         <div><span class="dot start-dot"></span> Start <b id="start-label">not set</b></div>
         <div><span class="dot end-dot"></span> End <b id="end-label">not set</b></div>
-      </div>
       <ul id="route-cards" class="route-cards" data-empty-hint="Alternative routes will appear here"></ul>
       <div class="panel-actions">
         <button id="clear-alternatives-btn" class="btn btn-ghost">
@@ -173,7 +168,6 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.1"/><circle cx="18" cy="6" r="2.1"/><circle cx="18" cy="18" r="2.1"/><path d="M7.9 10.9l8.2-3.8M7.9 13.1l8.2 3.8"/></svg>
           Share
         </button>
-      </div>
       <div id="alternatives-share-box" class="share-box hidden"></div>
       <div id="alternatives-status" class="status-message"></div>
     </aside>
@@ -183,7 +177,6 @@
       <div class="panel-header">
         <h2>Elevation profile</h2>
         <span class="hint">Click the map to set start, then end</span>
-      </div>
       <div class="profile-select">
         <label>
           <input type="radio" name="elevation-profile" value="foot" checked />
@@ -193,15 +186,12 @@
           <input type="radio" name="elevation-profile" value="bike" />
           <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.2"/><circle cx="18.5" cy="17.5" r="3.2"/><path d="M5.5 17.5L10 8h4l3 4.5M10 8l2.5 4.5h6M8 12h4"/></svg>Cycling</span>
         </label>
-      </div>
       <div class="endpoint-labels">
         <div><span class="dot start-dot"></span> Start <b id="elev-start-label">not set</b></div>
         <div><span class="dot end-dot"></span> End <b id="elev-end-label">not set</b></div>
-      </div>
       <div id="elevation-summary" class="route-summary"></div>
       <div class="chart-container">
         <canvas id="elevation-chart" height="160"></canvas>
-      </div>
       <div class="panel-actions">
         <button id="clear-elevation-btn" class="btn btn-ghost">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>
@@ -211,7 +201,6 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.1"/><circle cx="18" cy="6" r="2.1"/><circle cx="18" cy="18" r="2.1"/><path d="M7.9 10.9l8.2-3.8M7.9 13.1l8.2 3.8"/></svg>
           Share
         </button>
-      </div>
       <div id="elevation-share-box" class="share-box hidden"></div>
       <div id="elevation-status" class="status-message"></div>
     </aside>
@@ -221,11 +210,9 @@
       <div class="panel-header">
         <h2>Line of sight</h2>
         <span class="hint">Click the map to set the observer, then the target</span>
-      </div>
       <div class="endpoint-labels">
         <div><span class="dot observer-dot"></span> Observer <b id="los-observer-label">not set</b></div>
         <div><span class="dot target-dot"></span> Target <b id="los-target-label">not set</b></div>
-      </div>
       <label class="field-row">
         <span>Observer eye height</span>
         <span class="field-input">
@@ -236,7 +223,6 @@
       <div id="los-verdict" class="los-verdict"></div>
       <div class="chart-container">
         <canvas id="los-chart" height="150"></canvas>
-      </div>
       <p class="method-note">
         Terrain is sampled from SRTM (about 30 m posting) and corrected for Earth
         curvature and atmospheric refraction. Ground surface only — buildings and
@@ -247,7 +233,6 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>
           Clear
         </button>
-      </div>
       <div id="los-status" class="status-message"></div>
     </aside>
 
@@ -256,7 +241,6 @@
       <div class="panel-header">
         <h2>Layout &amp; export</h2>
         <span class="hint">Build a printable sheet, or download your work for other GIS software</span>
-      </div>
 
       <label class="stack-field">
         <span>Map title</span>
@@ -273,14 +257,13 @@
         <label><input type="checkbox" name="alternatives" checked /><span>Route comparison</span></label>
         <label><input type="checkbox" name="elevation" checked /><span>Elevation profile</span></label>
         <label><input type="checkbox" name="sightline" checked /><span>Line-of-sight result</span></label>
-      </div>
+        <label><input type="checkbox" name="bookmarks" /><span>Saved places</span></label>
 
       <div class="panel-actions">
         <button id="do-print-btn" class="btn btn-primary" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4v-6h16v6h-2M8 14h8v7H8z"/></svg>
           Print layout
         </button>
-      </div>
 
       <span class="block-label">Download</span>
       <div id="export-formats" class="chips">
@@ -288,11 +271,21 @@
         <button class="chip" data-format="kml" type="button">KML</button>
         <button class="chip" data-format="kmz" type="button">KMZ</button>
         <button class="chip" data-format="shp" type="button">Shapefile</button>
-      </div>
       <div id="export-status" class="status-message"></div>
     </aside>
 
-  </div>
+
+
+    </div>
+
+    <footer class="sidebar-foot">
+      <span class="foot-note">Routing OSRM · Places OSM · Terrain SRTM</span>
+    </footer>
+  </aside>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+  </button>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>

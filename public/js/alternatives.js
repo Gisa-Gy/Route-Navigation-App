@@ -1,6 +1,11 @@
 // Feature 2: click-to-set start/end, fetch route alternatives, render + compare.
 
-const ROUTE_COLORS = ['#0b6e4f', '#c2410c', '#6d28d9']; // colorblind-safe, matches --color-route-* tokens
+const ROUTE_COLORS = ['#1d4ed8', '#ea580c', '#7c3aed']; // distinct hues, colourblind-safe
+// Alternatives usually share long stretches of road. Where two routes sit on
+// exactly the same segment the upper one would completely hide the lower, so
+// each route also gets its own dash pattern: the gaps in the top line let the
+// one beneath show through, and overlap stays visible instead of disappearing.
+const ROUTE_DASHES = [null, '10 8', '2 7'];
 // Bumped on every fetch/clear so a Clear during an in-flight request can't
 // have that request's routes reappear on the map after it resolves.
 let alternativesRequestId = 0;
@@ -88,6 +93,7 @@ async function fetchAlternatives() {
         color,
         weight: i === 0 ? 6 : 4,
         opacity: 0.85,
+        dashArray: ROUTE_DASHES[i % ROUTE_DASHES.length],
       }).addTo(map);
       // Stop propagation so this click doesn't also reach the map's click
       // handler, which would immediately reset the selection right back to
@@ -96,7 +102,7 @@ async function fetchAlternatives() {
         L.DomEvent.stopPropagation(e);
         selectRoute(route.id);
       });
-      return { ...route, polyline, color };
+      return { ...route, polyline, color, dash: ROUTE_DASHES[i % ROUTE_DASHES.length] };
     });
 
     map.fitBounds(L.featureGroup(Alternatives.routes.map((r) => r.polyline)).getBounds(), { padding: [30, 30] });
@@ -132,6 +138,7 @@ function selectRoute(id) {
     route.polyline.setStyle({
       weight: isSelected ? 7 : (id === null && route.id === 0 ? 6 : 4),
       opacity: isDimmed ? 0.3 : 0.85,
+      dashArray: ROUTE_DASHES[route.id % ROUTE_DASHES.length],
     });
     if (isSelected) route.polyline.bringToFront();
   });

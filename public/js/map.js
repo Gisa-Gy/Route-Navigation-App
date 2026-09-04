@@ -2,25 +2,30 @@
 
 const map = L.map('map', { zoomControl: false }).setView([51.505, -0.09], 13); // London default view
 
-// Esri World Light Gray Canvas — a free, no-key-required, unlimited-quota
-// basemap with the same muted/minimal look CARTO Positron had. Switched
-// away from CARTO's basemaps.cartocdn.com because its anonymous tier is
-// quota-limited and starts watermarking tiles once real public traffic
-// (e.g. after deploying) crosses its shared free threshold.
+// Basemaps. Street (OpenStreetMap) is the default: it carries the road names,
+// building footprints and POI labels that make a routing app legible. The
+// muted Esri canvas and OpenTopoMap are offered as alternatives from the
+// basemap switcher in map-components.js.
+const OSM_STREET = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const OSM_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
 const ESRI_LIGHT_GRAY = 'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}';
 const ESRI_LIGHT_GRAY_LABELS = 'https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}';
 const ESRI_ATTRIBUTION = '&copy; <a href="https://www.esri.com">Esri</a> &mdash; Esri, DeLorme, NAVTEQ';
 
-// Grouped so the basemap switcher (map-components.js) can toggle base+labels
-// as one "Light" option. Exposed on window for that file to read.
-const esriLightGrayLayer = L.layerGroup([
+const streetLayer = L.tileLayer(OSM_STREET, { maxZoom: 19, attribution: OSM_ATTRIBUTION });
+
+// Base + labels grouped so the switcher toggles them as one option.
+const lightGrayLayer = L.layerGroup([
   L.tileLayer(ESRI_LIGHT_GRAY, { maxZoom: 19, attribution: ESRI_ATTRIBUTION }),
-  // Labels layer stacks on top of the base tiles (added-order determines
-  // stacking) but still sits below route polylines/markers, which live in
-  // Leaflet's higher-z overlay/marker panes.
   L.tileLayer(ESRI_LIGHT_GRAY_LABELS, { maxZoom: 19 }),
-]).addTo(map);
-window.__esriLightGray = esriLightGrayLayer;
+]);
+
+streetLayer.addTo(map); // default
+
+// Exposed for the basemap switcher.
+window.__basemaps = { street: streetLayer, light: lightGrayLayer };
 
 // Default top-left zoom control would collide with the floating brand/tabs bar.
 L.control.zoom({ position: 'bottomleft' }).addTo(map);

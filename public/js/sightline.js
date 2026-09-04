@@ -181,7 +181,9 @@
   function drawLine(result) {
     const a = [LOS.observer.lat, LOS.observer.lng];
     const b = [LOS.target.lat, LOS.target.lng];
-    const color = result.visible ? '#0f8a5f' : '#c2410c';
+    // Magenta/red rather than green: a sight line is not a route, and must
+    // not read as one where it crosses the planner or alternatives lines.
+    const color = result.visible ? '#be185d' : '#dc2626';
 
     LOS.line = L.polyline([a, b], {
       color,

@@ -1,21 +1,16 @@
-// Map components: basemap switcher, scale bar, coordinate readout, compass/reset,
-// current-location, and fullscreen. Runs after map.js (which creates `map` and
-// adds the default Esri Light Gray base). This file only ADDS controls and extra
-// selectable basemaps — it does not touch the existing default layer or any tool.
+// Map components: basemap switcher, scale bar, coordinate readout, reset view,
+// current-location and fullscreen. Runs after map.js, which creates `map` and
+// adds the default street basemap. This file only ADDS controls — it doesn't
+// change the default layer or touch any tool.
 
 (function () {
-  // --- Extra selectable basemaps -------------------------------------------
-  // The default Esri Light Gray base+labels is already on the map (from map.js).
-  // We wrap it as one logical "Light" option and offer Topographic + Street too.
+  // --- Basemap switcher -----------------------------------------------------
+  // Street and the light canvas are built in map.js (street is already on the
+  // map). Topographic is added here.
   //
   // NOTE: OpenTopoMap is a small volunteer project with a strict tile-usage
-  // policy and aggressive rate-limiting. It is offered here as a *selectable*
-  // option, NOT the default, to stay within acceptable casual-use limits. For
-  // production/high-traffic use, host your own topo tiles or use a keyed provider.
-  // Reuse the "Light" group that map.js already created and added — avoids
-  // loading the Esri tiles twice and keeps the switcher's radio state honest.
-  const lightGray = window.__esriLightGray;
-
+  // policy and aggressive rate-limiting, so it is a selectable option rather
+  // than the default. For real traffic, host your own topo tiles.
   const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     maxZoom: 17,
     attribution:
@@ -23,15 +18,10 @@
       'SRTM | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)',
   });
 
-  const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  });
-
   const baseLayers = {
-    'Light': lightGray,
+    'Street': window.__basemaps.street,
     'Topographic': topo,
-    'Street': street,
+    'Light canvas': window.__basemaps.light,
   };
 
   L.control.layers(baseLayers, null, { position: 'bottomright', collapsed: true }).addTo(map);
@@ -166,5 +156,20 @@
   });
   map.on('mouseout', () => {
     coordDisplay._el.innerHTML = 'Lat —, Lng —';
+  });
+})();
+
+// Sidebar collapse. Leaflet must be told the map container resized, otherwise
+// it keeps using the old width and the centre drifts.
+(function () {
+  const toggle = document.getElementById('sidebar-toggle');
+  if (!toggle) return;
+
+  toggle.addEventListener('click', () => {
+    const collapsed = document.body.classList.toggle('sidebar-collapsed');
+    toggle.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+    toggle.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+    // Wait for the width transition to finish before remeasuring.
+    setTimeout(() => map.invalidateSize({ pan: false }), 260);
   });
 })();

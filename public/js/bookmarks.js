@@ -81,6 +81,10 @@
     savePlace: function (name, lat, lng) {
       addBookmark(name, lat, lng, 16);
     },
+    // Read-only copy for the print sheet.
+    all: function () {
+      return bookmarks.slice();
+    },
   };
 
   load();
