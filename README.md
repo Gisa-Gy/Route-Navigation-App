@@ -1,82 +1,102 @@
 # RouteNavigator
 
-A lightweight web GIS route-planning application. Interactive Leaflet map with
-three tools that share one map:
+A web GIS route-planning and terrain-analysis application. Leaflet client,
+Node/Express backend that proxies routing, elevation and geocoding services.
 
-- **Planner** — drop 2–5 waypoints, get a route, and optimize the stop order (TSP).
-- **Alternatives** — set a start and end, compare parallel route options.
-- **Elevation** — walking/cycling profile with an elevation chart synced to map hover.
+## Tools
 
-Plus shareable URLs that encode the current route state.
+**Explore**
+- **Search** — place/address search (Nominatim), with results usable as routing stops
+- **Saved places** — bookmark map views and places, stored in the browser
+
+**Routing**
+- **Plan** — 2–5 waypoints, drag to reorder, optimize stop order (TSP via OSRM Trip)
+- **Compare** — alternative routes between two points, ranked by distance and time
+- **Profile** — walking/cycling elevation profile with chart-to-map hover sync
+
+**Analysis**
+- **Line of sight** — terrain-based visibility between an observer and a target,
+  corrected for Earth curvature and atmospheric refraction
+
+Route state can be encoded into a shareable URL.
 
 ## Architecture
 
 ```
-Browser (Leaflet + Chart.js, vanilla JS)
-   |  same-origin fetch: /api/route, /api/trip, /api/elevation
+Browser (Leaflet, Chart.js, vanilla JS — one module per tool)
+   |  same-origin fetch
    v
-Express server (server.js)
-   |  proxies to upstream services (keeps rate limits / keys server-side)
+Express (server.js)
+   |  /api/route  /api/trip  /api/elevation  /api/geocode
    v
-OSRM (routing + trip optimization)  +  Open-Elevation (point elevations)
+OSRM (routing, TSP) | Open-Elevation (SRTM) | Nominatim (geocoding)
 ```
 
-The browser never calls the upstream map services directly — the Express
-layer owns those calls. That keeps third-party URLs and any future API keys
-off the client and gives one place to normalize errors and handle rate limits.
+The browser never calls upstream services directly. Beyond keeping rate-limit
+handling and future API keys server-side, it is required: Nominatim's usage
+policy mandates a descriptive `User-Agent`, which a browser cannot set.
 
-### API contract (server ↔ client)
+### API contract
 
-| Endpoint | Request body | Response |
+| Endpoint | Request | Response |
 | --- | --- | --- |
-| `POST /api/route` | `{ coordinates: [[lng,lat],...], profile? }` | `{ routes: [{ geometry, distanceMeters, durationSeconds }, ...] }` |
-| `POST /api/trip` | `{ coordinates: [[lng,lat],...], profile? }` | `{ optimizedOrder, geometry, distanceMeters, durationSeconds }` |
-| `POST /api/elevation` | `{ points: [[lat,lng],...] }` | `{ elevations: [{ elevationMeters }, ...] }` |
+| `POST /api/route` | `{ coordinates: [[lng,lat],...], profile? }` | `{ routes: [{ geometry, distanceMeters, durationSeconds }] }` |
+| `POST /api/trip` | `{ coordinates: [[lng,lat],...] }` | `{ optimizedOrder, geometry, distanceMeters, durationSeconds }` |
+| `POST /api/elevation` | `{ points: [[lat,lng],...] }` | `{ elevations: [{ elevationMeters }] }` |
+| `GET /api/geocode?q=` | query string | `{ results: [{ name, lat, lng, boundingbox }] }` |
 
-Note the coordinate order differs by endpoint (`[lng,lat]` for routing,
-`[lat,lng]` for elevation) — this matches what the client sends.
+Coordinate order differs by endpoint (`[lng,lat]` for routing, `[lat,lng]` for
+elevation) — this matches OSRM and the client respectively.
+
+## Line-of-sight method
+
+Terrain is sampled roughly every 50 m along the sight line (capped at 120
+samples) and each sample is corrected for curvature and refraction using
+`drop = (1 - k)·d² / 2R` with `k = 0.13`. The target is visible when no
+intermediate sample rises above the straight line from the observer's eye to
+the target's ground point.
+
+**Data limitation, stated plainly:** Open-Elevation serves SRTM, a bare-earth
+*terrain* model at roughly 30 m posting. Vegetation and buildings are not
+represented, so a "visible" result means the *terrain* is clear — not that the
+line is physically unobstructed. The interface says this too.
+
+## Not implemented
+
+Viewshed and least-cost path are deliberately absent. Both need a real DEM
+raster and server-side grid processing; neither can be done honestly from
+sampled point elevations, so no placeholder is shipped.
 
 ## Local development
 
-Requires Node 18+.
+Node 18+.
 
 ```bash
 npm install
-npm start
-# open http://localhost:3000
+npm start   # http://localhost:3000
 ```
 
 ## Configuration
 
-All upstream URLs are overridable via environment variables (defaults in
-`server.js`):
+| Variable | Default |
+| --- | --- |
+| `PORT` | `3000` |
+| `OSRM_DRIVING_URL` | `https://router.project-osrm.org` |
+| `OSRM_FOOT_URL` | `https://routing.openstreetmap.de/routed-foot` |
+| `OSRM_BIKE_URL` | `https://routing.openstreetmap.de/routed-bike` |
+| `ELEVATION_URL` | `https://api.open-elevation.com/api/v1/lookup` |
+| `NOMINATIM_URL` | `https://nominatim.openstreetmap.org/search` |
+| `GEOCODER_USER_AGENT` | `RouteNavigator/1.0 (portfolio web GIS project)` |
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `PORT` | `3000` | Port to listen on (Render sets this automatically) |
-| `OSRM_DRIVING_URL` | `https://router.project-osrm.org` | Driving routing/trip |
-| `OSRM_FOOT_URL` | `https://routing.openstreetmap.de/routed-foot` | Walking routing |
-| `OSRM_BIKE_URL` | `https://routing.openstreetmap.de/routed-bike` | Cycling routing |
-| `ELEVATION_URL` | `https://api.open-elevation.com/api/v1/lookup` | Point elevations |
+## Upstream services
 
-## ⚠️ On the default upstream servers
+Defaults are public demo endpoints (OSRM, FOSSGIS, Open-Elevation, Nominatim).
+They are rate-limited and their policies forbid heavy traffic — fine for a
+portfolio demo, not for production load. Point the variables above at your own
+instances to scale; no code change needed. OpenTopoMap is offered as a
+selectable basemap rather than the default for the same reason.
 
-The defaults are **public demo servers** (OSRM's `router.project-osrm.org`,
-the FOSSGIS `routing.openstreetmap.de` instances, and Open-Elevation). They
-are rate-limited and their usage policies forbid heavy/production traffic.
-They are fine for a portfolio demo you walk people through.
+## Deployment
 
-For anything under real load, stand up your own OSRM instance(s) and elevation
-source and point the environment variables above at them — no code change is
-needed.
-
-## Deployment (Render)
-
-This repo includes `render.yaml`, so you can deploy as a **Node web service**
-either via Render's Blueprint flow or by configuring manually:
-
-- Build command: `npm install`
-- Start command: `npm start`
-
-Render provides `PORT` automatically. See the deployment walkthrough for
-step-by-step instructions.
+Node **web service** on Render (`render.yaml` included):
+build `npm install`, start `npm start`. `PORT` is provided by Render.

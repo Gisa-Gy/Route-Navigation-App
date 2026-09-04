@@ -39,18 +39,23 @@ function createPinIcon(label, colorVar, size = 26) {
 
 let currentMode = 'planner';
 
+// Map-click handlers for tools added after the original three. Tools register
+// themselves here instead of this file growing an if/else per tool.
+window.__modeHandlers = {};
+window.registerModeHandler = function (mode, handler) {
+  window.__modeHandlers[mode] = handler;
+};
+
 const modeTabs = document.querySelectorAll('.mode-tab');
-const plannerPanel = document.getElementById('planner-panel');
-const alternativesPanel = document.getElementById('alternatives-panel');
-const elevationPanel = document.getElementById('elevation-panel');
+// Panels are matched by data-panel, so adding a tool means adding markup —
+// no edit here.
+const sidePanels = document.querySelectorAll('.side-panel');
 
 modeTabs.forEach((tab) => {
   tab.addEventListener('click', () => {
     currentMode = tab.dataset.mode;
     modeTabs.forEach((t) => t.classList.toggle('active', t === tab));
-    plannerPanel.classList.toggle('hidden', currentMode !== 'planner');
-    alternativesPanel.classList.toggle('hidden', currentMode !== 'alternatives');
-    elevationPanel.classList.toggle('hidden', currentMode !== 'elevation');
+    sidePanels.forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== currentMode));
   });
 });
 
@@ -61,5 +66,7 @@ map.on('click', (e) => {
     window.alternativesOnMapClick(e.latlng);
   } else if (currentMode === 'elevation') {
     window.elevationOnMapClick(e.latlng);
+  } else if (window.__modeHandlers[currentMode]) {
+    window.__modeHandlers[currentMode](e.latlng);
   }
 });

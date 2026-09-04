@@ -1,7 +1,3 @@
-# Render blueprint. With this file in the repo root you can deploy via
-# Render's "Blueprint" flow (New + -> Blueprint -> pick this repo) instead of
-# configuring the service by hand. You can also ignore it and set the same
-# values manually in the dashboard — see README.
 services:
   - type: web
     name: routenavigator
@@ -10,16 +6,5 @@ services:
     buildCommand: npm install
     startCommand: npm start
     envVars:
-      # OSRM demo hosts are the defaults in server.js. To use your own OSRM
-      # instances in production, uncomment and set these in the Render
-      # dashboard (Environment tab) — no code change needed.
-      # - key: OSRM_DRIVING_URL
-      #   value: https://your-osrm-driving-host
-      # - key: OSRM_FOOT_URL
-      #   value: https://your-osrm-foot-host
-      # - key: OSRM_BIKE_URL
-      #   value: https://your-osrm-bike-host
-      # - key: ELEVATION_URL
-      #   value: https://your-elevation-endpoint
       - key: NODE_VERSION
         value: "22"

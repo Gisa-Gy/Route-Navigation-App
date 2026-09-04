@@ -163,7 +163,7 @@ function renderSummary(route, sampledPoints) {
 function drawElevationRoute(coordinates) {
   if (Elevation.routePolyline) map.removeLayer(Elevation.routePolyline);
   const latlngs = coordinates.map(([lng, lat]) => [lat, lng]);
-  Elevation.routePolyline = L.polyline(latlngs, { color: '#0d9488', weight: 5 }).addTo(map);
+  Elevation.routePolyline = L.polyline(latlngs, { color: '#0f766e', weight: 5 }).addTo(map);
   map.fitBounds(Elevation.routePolyline.getBounds(), { padding: [30, 30] });
 
   Elevation.routePolyline.on('mousemove', onRouteHover);
@@ -206,7 +206,7 @@ function showHoverMarker(point) {
       radius: 7,
       color: '#fff',
       weight: 2,
-      fillColor: '#0d9488',
+      fillColor: '#0f766e',
       fillOpacity: 1,
     }).addTo(map);
   } else {
@@ -234,8 +234,8 @@ function renderChart(sampledPoints) {
       datasets: [{
         label: 'Elevation (m)',
         data: sampledPoints.map((p) => p.elevationMeters),
-        borderColor: '#0d9488',
-        backgroundColor: 'rgba(13, 148, 136, 0.14)',
+        borderColor: '#0f766e',
+        backgroundColor: 'rgba(15, 118, 110, 0.14)',
         fill: true,
         pointRadius: 0,
         tension: 0.2,

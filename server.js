@@ -19,6 +19,19 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json({ limit: '256kb' }));
 
+// A malformed body would otherwise fall through to Express's default handler,
+// which returns an HTML stack trace. The client only ever parses JSON, so keep
+// errors in that shape (and don't leak internals to the browser).
+app.use((err, req, res, next) => {
+  if (err && err.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'Request body must be valid JSON.' });
+  }
+  if (err && err.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'Request body is too large.' });
+  }
+  next(err);
+});
+
 // ---------------------------------------------------------------------------
 // Upstream configuration
 // ---------------------------------------------------------------------------
@@ -229,6 +242,58 @@ app.post('/api/elevation', async (req, res) => {
     const aborted = e && e.name === 'AbortError';
     res.status(504).json({
       error: aborted ? 'Elevation service timed out.' : 'Could not reach the elevation service.',
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/geocode?q=...  — place search (Nominatim)
+// ---------------------------------------------------------------------------
+// Nominatim's usage policy REQUIRES a descriptive User-Agent identifying the
+// application. A browser cannot set that header, which is one concrete reason
+// this call belongs on the server rather than in the client.
+const NOMINATIM_URL = process.env.NOMINATIM_URL || 'https://nominatim.openstreetmap.org/search';
+const GEOCODER_UA =
+  process.env.GEOCODER_USER_AGENT || 'RouteNavigator/1.0 (portfolio web GIS project)';
+
+app.get('/api/geocode', async (req, res) => {
+  const q = (req.query.q || '').toString().trim();
+  if (q.length < 2) {
+    return res.status(400).json({ error: 'Enter at least two characters to search.' });
+  }
+
+  const url =
+    `${NOMINATIM_URL}?format=jsonv2&limit=6&addressdetails=1&q=${encodeURIComponent(q)}`;
+
+  try {
+    const upstream = await fetchWithTimeout(url, {
+      headers: { 'User-Agent': GEOCODER_UA, 'Accept-Language': 'en' },
+    }, 12000);
+
+    if (upstream.status === 429) {
+      return res.status(429).json({ error: 'Search is rate limited right now. Try again shortly.' });
+    }
+
+    const data = await upstream.json().catch(() => null);
+    if (!Array.isArray(data)) {
+      return res.status(502).json({ error: 'Search service is unavailable right now.' });
+    }
+
+    res.json({
+      results: data.map((r) => ({
+        name: r.display_name,
+        lat: parseFloat(r.lat),
+        lng: parseFloat(r.lon),
+        category: r.category || null,
+        type: r.type || null,
+        // [south, north, west, east] -> pass through for map fitting
+        boundingbox: Array.isArray(r.boundingbox) ? r.boundingbox.map(Number) : null,
+      })),
+    });
+  } catch (e) {
+    const aborted = e && e.name === 'AbortError';
+    res.status(504).json({
+      error: aborted ? 'Search timed out.' : 'Could not reach the search service.',
     });
   }
 });

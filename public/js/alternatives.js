@@ -1,6 +1,6 @@
 // Feature 2: click-to-set start/end, fetch route alternatives, render + compare.
 
-const ROUTE_COLORS = ['#4f46e5', '#f59e0b', '#a855f7']; // colorblind-safe, matches --color-route-* tokens
+const ROUTE_COLORS = ['#0b6e4f', '#c2410c', '#6d28d9']; // colorblind-safe, matches --color-route-* tokens
 // Bumped on every fetch/clear so a Clear during an in-flight request can't
 // have that request's routes reappear on the map after it resolves.
 let alternativesRequestId = 0;

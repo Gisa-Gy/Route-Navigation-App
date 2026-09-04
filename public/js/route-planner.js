@@ -15,7 +15,7 @@ function drawPlannerRoute(coordinates) {
     plannerPolyline = null;
   }
   const latlngs = coordinates.map(([lng, lat]) => [lat, lng]);
-  plannerPolyline = L.polyline(latlngs, { color: '#4f46e5', weight: 5 }).addTo(map);
+  plannerPolyline = L.polyline(latlngs, { color: '#0b6e4f', weight: 5 }).addTo(map);
 }
 
 function formatSummary(distanceMeters, durationSeconds) {
